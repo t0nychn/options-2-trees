@@ -233,11 +233,11 @@ st.write("\n")
 st.header("3. Misc")
 st.markdown("Thanks for stopping by! For any comments or contributions please get in touch via [GitHub](https://github.com/t0nychn/options-2-trees)")
 st.subheader("3.1 Resources")
+st.markdown("[options-2-trees source code](https://github.com/t0nychn/options-2-trees/blob/main/final.py)")
 st.markdown("[Investopedia: Options Definition](https://www.investopedia.com/terms/o/option.asp)")
-st.markdown("[Investopedia: Binomial Option Pricing Model](https://www.investopedia.com/terms/b/binomialoptionpricing.asp)")
 st.markdown("[Nerdwallet: Options 101](https://www.nerdwallet.com/article/investing/options-trading-101)")
+st.markdown("[Investopedia: Binomial Option Pricing Model](https://www.investopedia.com/terms/b/binomialoptionpricing.asp)")
 st.markdown("[Cox, Ross & Rubinstein (1979). 'Option Pricing: a simplified approach'. Journal of Financial Economics 7 (1979) 229-263.](https://github.com/t0nychn/options-2-trees/blob/main/option_pricing_a_simplified_approach.pdf)")
-st.markdown("[Sourcecode](")
 
 st.subheader("3.2 Disclaimer")
 st.write("All information on options-2-trees is provided for educational purposes only and does not constitute "
