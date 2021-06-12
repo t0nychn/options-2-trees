@@ -6,8 +6,8 @@ Created on Fri Jun  4 11:54:56 2021
 """
 import streamlit as st
 from datetime import datetime
-import math
-import pandas as pd
+import tree_constructor as tc
+import tree_plotter as tp
 import matplotlib.pyplot as plt
 
 # headings
@@ -42,117 +42,17 @@ u = st.sidebar.slider('Stock Growth Factor (u)', value=1.10,
 d = 1/u
 st.sidebar.write("Stock Decay Factor (d) ", round(d, 4))
 
-# p value
-p = (math.exp(r) - d) / (u - d)
-st.sidebar.write("Stock Growth Probability (p) ", round(p, 4))
-
-# decimal point of values
+# decimal point of values (non-adjustable)
 dp = 6
 
+# initialize calculations
+trees = tc.Calculate(S, X, T, r, u, dp)
 
-# functions
-def option_value(Vu, Vd):
-    """
-    returns option value from Vu and Vd
-    
-    """
-    return math.exp(-r) * (p * Vu + (1 - p) * Vd)
+# display p value
+p = trees.p_value()
+st.sidebar.write("Stock Growth Probability (p) ", round(p, 4))
 
-def stock_prices():
-    """
-    returns binary tree for stock prices
-    
-    """
-    tree = [[S]]
-    for t in range(T):
-        for state in tree:
-            new_state = set()
-            for p in range(len(state)):
-                if len(new_state) == 0:
-                    Su = state[p] * u
-                    Sd = state[p] * d
-                    new_state.add(round(Sd, dp))
-                    new_state.add(round(Su, dp))
-                else:
-                    Sd = state[p] * u
-                    new_state.add(round(Sd, dp))
-        tree.append(sorted(list(new_state)))
-    return tree
-
-def call_values():
-    """
-    returns reversed binary tree of call option prices
-    
-    """
-    end_values = map(lambda s: round(max(s-X, 0), dp), 
-                     reversed(stock_prices()[-1]))
-    reverse_tree = [[*end_values]]
-    for t in range(T):
-        for state in reverse_tree:
-            previous_state = []
-            for VT in range(1, len(state)):
-                Vt = option_value(state[VT-1], state[VT])
-                previous_state.append(max(round(Vt, dp), 0))
-        reverse_tree.append(previous_state)
-    return reverse_tree
-    
-def put_values():
-    """
-    returns reversed binary tree of put option prices
-    
-    """
-    end_values = map(lambda s: round(max(X-s, 0), dp), 
-                     reversed(stock_prices()[-1]))
-    reverse_tree = [[*end_values]]
-    for t in range(T):
-        for state in reverse_tree:
-            previous_state = []
-            for VT in range(1, len(state)):
-                Vt = option_value(state[VT-1], state[VT])
-                previous_state.append(max(round(Vt, dp), 0))
-        reverse_tree.append(previous_state)
-    return reverse_tree
-
-def plot_stock_lattice(tree=stock_prices(), style='ko-'):
-    vals1 = {}
-    for i, v in enumerate(tree):
-        vals1[i] = v
-    
-    df1 = pd.DataFrame(dict([(k,pd.Series(v)) for k,v in vals1.items()]))
-    
-    vals2 = {}
-    for i, v in enumerate(tree):
-        vals2[i] = reversed(v)
-    
-    df2 = pd.DataFrame(dict([(k,pd.Series(v)) for k,v in vals2.items()]))
-    
-    plt.plot(df1.transpose(), style)
-    plt.plot(df2.transpose(), style)
-    plt.xlabel("Time Period")
-    plt.ylabel("")
-    plt.annotate(S, (0, S), textcoords="offset points",
-                 xytext=(0,-15), ha='center')
-
-def plot_option_lattice(tree=call_values(), style='bo-'):
-    vals1 = {}
-    for i, v in enumerate(reversed(tree)):
-        vals1[i] = v
-    
-    df1 = pd.DataFrame(dict([(k,pd.Series(v)) for k,v in vals1.items()]))
-    
-    vals2 = {}
-    for i, v in enumerate(reversed(tree)):
-        vals2[i] = reversed(v)
-    
-    df2 = pd.DataFrame(dict([(k,pd.Series(v)) for k,v in vals2.items()]))
-    
-    plt.plot(df1.transpose(), style)
-    plt.plot(df2.transpose(), style)
-    plt.annotate(round(tree[-1][-1], 2), (0, tree[-1][-1]), textcoords="offset points",
-                 xytext=(0,-15), ha='center')
-
-
-# main body
+# back to main body
 st.header("*See how the Cox-Ross-Rubinstein (CRR) options pricing model react to changing parameters*")
 st.markdown("This visualisation aims to explore the dynamics of abstract financial theory. "
             "Can you adjust the display to see how how the value of a call option today is positively correlated to the interest rate, "
@@ -163,20 +63,28 @@ st.subheader('Key:')
 st.markdown("✅ Stock tree: black")
 call = st.checkbox('Call tree: blue')
 put = st.checkbox('Put tree: red')
-plot_stock_lattice()
+
+# plot stock tree
+tp.plot_stock_lattice(trees.stock_prices())
+
+# plot exercise price reference
 plt.plot(range(T+1), [X for t in range(T+1)], 
          linestyle="dashed", label="Exercise Price (X)")
 plt.annotate(X, (0, X), textcoords="offset points",
              xytext=(0,-15), ha='center')
 plt.legend()
+
+# plot options trees
 if call:
-    plot_option_lattice()
+    tp.plot_option_lattice(trees.call_values())
 if put:
-    plot_option_lattice(put_values(), 'ro-')
+    tp.plot_option_lattice(trees.put_values(), 'ro-')
 st.pyplot(plt)
 
-st.write("Call value (C): ", round(call_values()[-1][0], 4), "Put value (P): ", round(put_values()[-1][0], 4))
+# display calculated values
+st.write("Call value (C): ", round(trees.call_values()[-1][0], 4), "Put value (P): ", round(trees.put_values()[-1][0], 4))
 
+# text section
 st.header("1. What's Going On?")
 st.markdown("Options are financial instruments that derive value from an underlying asset. "
             "Most often, the underlying asset is a stock, which is what we're modelling here. "
