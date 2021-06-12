@@ -6,9 +6,11 @@ Created on Fri Jun  4 11:54:56 2021
 """
 import streamlit as st
 from datetime import datetime
+import matplotlib.pyplot as plt
+
+# custom packages (see repo)
 import tree_constructor as tc
 import tree_plotter as tp
-import matplotlib.pyplot as plt
 
 # headings
 month = datetime.now().month
